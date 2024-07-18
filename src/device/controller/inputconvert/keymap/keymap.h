@@ -116,7 +116,6 @@ public:
     virtual ~KeyMap();
 
     void loadKeyMap(const QString &json);
-    QString parseKeyMap(const QString &json);
     const KeyMap::KeyMapNode &getKeyMapNode(int key);
     const KeyMap::KeyMapNode &getKeyMapNodeKey(int key);
     const KeyMap::KeyMapNode &getKeyMapNodeMouse(int key);
@@ -130,6 +129,8 @@ public:
 private:
     // set up the reverse map from key/event event to keyMapNode
     void makeReverseMap();
+    QString parseKeyMap(const QString &json);
+
 
     // safe check for base
     bool checkItemString(const QJsonObject &node, const QString &name);

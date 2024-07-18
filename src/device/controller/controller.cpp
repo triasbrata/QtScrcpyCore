@@ -48,12 +48,11 @@ void Controller::updateScript(QString gameScript)
     if (m_inputConvert) {
         delete m_inputConvert;
     }
+    m_inputConvert = new InputConvertNormal(this);
     if (!gameScript.isEmpty()) {
         InputConvertGame *convertgame = new InputConvertGame(this);
         convertgame->loadKeyMap(gameScript);
         m_inputConvert = convertgame;
-    } else {
-        m_inputConvert = new InputConvertNormal(this);
     }
     Q_ASSERT(m_inputConvert);
     connect(m_inputConvert, &InputConvertBase::grabCursor, this, &Controller::grabCursor);
