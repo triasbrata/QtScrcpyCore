@@ -11,36 +11,31 @@
 KeyMap::KeyMap(QObject *parent) : QObject(parent) {}
 
 KeyMap::~KeyMap() {}
-
-void KeyMap::loadKeyMap(const QString &json)
-{
-    QString errorString;
+QString KeyMap::parseKeyMap(const QString &json){
+  
+    
     QJsonParseError jsonError;
     QJsonDocument jsonDoc;
     QJsonObject rootObj;
     QPair<ActionType, int> switchKey;
 
     jsonDoc = QJsonDocument::fromJson(json.toUtf8(), &jsonError);
-
-    if (jsonError.error != QJsonParseError::NoError) {
-        errorString = QString("json error: %1").arg(jsonError.errorString());
-        goto parseError;
+    if (jsonError.error != QJsonParseError::NoError){
+      return QString("json error: %1").arg(jsonError.errorString());
     }
-
+    
     // switchKey
     rootObj = jsonDoc.object();
 
     if (!checkItemString(rootObj, "switchKey")) {
-        errorString = QString("json error: no find switchKey");
-        goto parseError;
+        return QString("json error: no find switchKey");
+        
     }
 
     switchKey = getItemKey(rootObj, "switchKey");
     if (switchKey.first == AT_INVALID) {
-        errorString = QString("json error: switchKey invalid");
-        goto parseError;
+        return QString("json error: switchKey invalid");
     }
-
     m_switchKey.type = switchKey.first;
     m_switchKey.key = switchKey.second;
 
@@ -73,19 +68,16 @@ void KeyMap::loadKeyMap(const QString &json)
         }
 
         if (!have_speedRatio) {
-            errorString = QString("json error: speedRatio setting is missing in mouseMoveMap!");
-            goto parseError;
+            return QString("json error: speedRatio setting is missing in mouseMoveMap!");
         }
 
         // Sanity check: No ratio must be lower than 0.001
         if ( ( keyMapNode.data.mouseMove.speedRatio.x() < 0.001f ) || ( keyMapNode.data.mouseMove.speedRatio.x() < 0.001f ) ) {
-            errorString = QString("json error: Minimum speedRatio is 0.001");
-            goto parseError;
+            return QString("json error: Minimum speedRatio is 0.001");
         }
 
         if (!checkItemObject(mouseMoveMap, "startPos")) {
-            errorString = QString("json error: mouseMoveMap on find startPos");
-            goto parseError;
+            return QString("json error: mouseMoveMap on find startPos");
         }
         QJsonObject startPos = mouseMoveMap.value("startPos").toObject();
         if (checkItemDouble(startPos, "x")) {
@@ -99,27 +91,23 @@ void KeyMap::loadKeyMap(const QString &json)
         if (checkItemObject(mouseMoveMap, "smallEyes")) {
             QJsonObject smallEyes = mouseMoveMap.value("smallEyes").toObject();
             if (!smallEyes.contains("type") || !smallEyes.value("type").isString()) {
-                errorString = QString("json error: smallEyes no find node type");
-                goto parseError;
+                return QString("json error: smallEyes no find node type");
             }
 
             // type just support KMT_CLICK
             KeyMap::KeyMapType type = getItemKeyMapType(smallEyes, "type");
             if (KeyMap::KMT_CLICK != type) {
-                errorString = QString("json error: smallEyes just support KMT_CLICK");
-                goto parseError;
+                return QString("json error: smallEyes just support KMT_CLICK");
             }
 
             // safe check
             if (!checkForClick(smallEyes)) {
-                errorString = QString("json error: smallEyes node format error");
-                goto parseError;
+                return QString("json error: smallEyes node format error");
             }
 
             QPair<ActionType, int> key = getItemKey(smallEyes, "key");
             if (key.first == AT_INVALID) {
-                errorString = QString("json error: keyMapNodes node invalid key: %1").arg(smallEyes.value("key").toString());
-                goto parseError;
+                return QString("json error: keyMapNodes node invalid key: %1").arg(smallEyes.value("key").toString());
             }
 
             keyMapNode.data.mouseMove.smallEyes.type = key.first;
@@ -138,13 +126,11 @@ void KeyMap::loadKeyMap(const QString &json)
         int size = keyMapNodes.size();
         for (int i = 0; i < size; i++) {
             if (!keyMapNodes.at(i).isObject()) {
-                errorString = QString("json error: keyMapNodes node must be json object");
-                goto parseError;
+                return QString("json error: keyMapNodes node must be json object");
             }
             node = keyMapNodes.at(i).toObject();
             if (!node.contains("type") || !node.value("type").isString()) {
-                errorString = QString("json error: keyMapNodes no find node type");
-                goto parseError;
+                return QString("json error: keyMapNodes no find node type");
             }
 
             KeyMap::KeyMapType type = getItemKeyMapType(node, "type");
@@ -235,20 +221,21 @@ void KeyMap::loadKeyMap(const QString &json)
                 QPair<ActionType, int> rightKey = getItemKey(node, "rightKey");
                 QPair<ActionType, int> upKey = getItemKey(node, "upKey");
                 QPair<ActionType, int> downKey = getItemKey(node, "downKey");
-                if (leftKey.first == AT_INVALID || rightKey.first == AT_INVALID || upKey.first == AT_INVALID || downKey.first == AT_INVALID) {
-                    if (leftKey.first == AT_INVALID) {
-                        qWarning() << "json error: keyMapNodes node invalid key: " << node.value("leftKey").toString();
-                    }
-                    if (rightKey.first == AT_INVALID) {
-                        qWarning() << "json error: keyMapNodes node invalid key: " << node.value("rightKey").toString();
-                    }
-                    if (upKey.first == AT_INVALID) {
-                        qWarning() << "json error: keyMapNodes node invalid key: " << node.value("upKey").toString();
-                    }
-                    if (downKey.first == AT_INVALID) {
-                        qWarning() << "json error: keyMapNodes node invalid key: " << node.value("downKey").toString();
-                    }
-                    break;
+                bool invalidParseSteer = leftKey.first == AT_INVALID || rightKey.first == AT_INVALID || upKey.first == AT_INVALID || downKey.first == AT_INVALID;
+                if (leftKey.first == AT_INVALID) {
+                    qWarning() << "json error: keyMapNodes node invalid key: " << node.value("leftKey").toString();
+                }
+                if (rightKey.first == AT_INVALID) {
+                    qWarning() << "json error: keyMapNodes node invalid key: " << node.value("rightKey").toString();
+                }
+                if (upKey.first == AT_INVALID) {
+                    qWarning() << "json error: keyMapNodes node invalid key: " << node.value("upKey").toString();
+                }
+                if (downKey.first == AT_INVALID) {
+                    qWarning() << "json error: keyMapNodes node invalid key: " << node.value("downKey").toString();
+                }
+                if (invalidParseSteer) {
+                  break;
                 }
 
                 KeyMapNode keyMapNode;
@@ -309,14 +296,19 @@ void KeyMap::loadKeyMap(const QString &json)
             }
         }
     }
+
+  return QString();
+}
+void KeyMap::loadKeyMap(const QString &json)
+{
+    QString errorString = parseKeyMap(json);
+    if (!errorString.isEmpty()) {
+        qWarning() << errorString;
+        return;
+    }
     // this must be called after m_keyMapNodes is stable
     makeReverseMap();
     qInfo() << "Script updated, current keymap mode:normal, Press ~ key to switch keymap mode";
-
-parseError:
-    if (!errorString.isEmpty()) {
-        qWarning() << errorString;
-    }
     return;
 }
 
