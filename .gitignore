@@ -40,3 +40,6 @@ compile_commands.json
 
 # QtCreator local machine specific files for imported projects
 *creator.user*
+CMakeFiles
+QtScrcpyCore_autogen
+cmake_install.cmake
