@@ -5,34 +5,35 @@
 
 #include "../../include/QtScrcpyCore.h"
 
-namespace qsc {
-
-class DeviceManage : public IDeviceManage
+namespace qsc
 {
-    Q_OBJECT
-public:
-    explicit DeviceManage();
-    virtual ~DeviceManage();
 
-    virtual QPointer<IDevice> getDevice(const QString& serial) override;
+    class DeviceManage : public IDeviceManage
+    {
+        Q_OBJECT
+    public:
+        explicit DeviceManage();
+        virtual ~DeviceManage();
 
-    bool connectDevice(qsc::DeviceParams params) override;
-    bool disconnectDevice(const QString &serial) override;
-    void disconnectAllDevice() override;
+        virtual QPointer<IDevice> getDevice(const QString &serial) override;
 
-protected slots:
-    void onDeviceConnected(bool success, const QString& serial, const QString& deviceName, const QSize& size);
-    void onDeviceDisconnected(QString serial);
+        bool connectDevice(qsc::DeviceParams params) override;
+        bool disconnectDevice(const QString &serial) override;
+        void disconnectAllDevice() override;
 
-private:
-    quint16 getFreePort();
-    void removeDevice(const QString& serial);
+    protected slots:
+        void onDeviceConnected(bool success, const QString &serial, const QString &deviceName, const QSize &size);
+        void onDeviceDisconnected(QString serial);
 
-private:
-    QMap<QString, QPointer<IDevice>> m_devices;
-    quint16 m_localPortStart = 27183;
-    QString m_script;
-};
+    private:
+        quint16 getFreePort();
+        void removeDevice(const QString &serial);
 
-}
+    private:
+        QMap<QString, QPointer<IDevice>> m_devices;
+        quint16 m_localPortStart = 27183;
+        QString m_script;
+    };
+
+} // namespace qsc
 #endif // DEVICEMANAGE_H
